@@ -6,6 +6,7 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
@@ -41,6 +42,18 @@ public class K8SCluterStateApp {
         container.setQueueNames(queueName);
         container.setMessageListener(listenerAdapter);
         return container;
+    }
+
+    @Bean
+    public ConnectionFactory connectionFactory(
+            @Value("${rabbitMQ.host") String host,
+            @Value("${rabbitMQ.user}") String user,
+            @Value("${rabbitMQ.password}") String password) {
+        CachingConnectionFactory connectionFactory =
+                new CachingConnectionFactory(host);
+        connectionFactory.setUsername(user);
+        connectionFactory.setPassword(password);
+        return connectionFactory;
     }
 
     public static void main(String[] args) {
