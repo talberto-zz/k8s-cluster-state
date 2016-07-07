@@ -2,9 +2,9 @@ package fr.xebia.xebicon;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 
-@Bean
+@Component
 public class K8SClientConf {
 
     public final String masterUrl;
@@ -17,10 +17,10 @@ public class K8SClientConf {
 
     @Autowired
     public K8SClientConf(
-            @Value("masterUrl") String masterUrl,
-            @Value("user") String user,
-            @Value("password") String password,
-            @Value("namespace") String namespace
+            @Value("${k8s.masterUrl}") String masterUrl,
+            @Value("${k8s.user}") String user,
+            @Value("${k8s.password}") String password,
+            @Value("${k8s.namespace}") String namespace
     ) {
         this.masterUrl = masterUrl;
         this.user = user;

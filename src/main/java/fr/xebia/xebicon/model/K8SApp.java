@@ -1,4 +1,4 @@
-package fr.xebia.xebicon.json;
+package fr.xebia.xebicon.model;
 
 public class K8SApp {
 
