@@ -14,22 +14,17 @@ public class K8SClusterStateConsumer implements Consumer<K8SClusterState> {
 
     private static final Logger logger = LoggerFactory.getLogger(K8SClusterStateConsumer.class);
 
-    private final String queueName;
     private final RabbitTemplate rabbitTemplate;
 
     @Autowired
-    public K8SClusterStateConsumer(String queueName, RabbitTemplate rabbitTemplate) {
-        this.queueName = queueName;
+    public K8SClusterStateConsumer(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
     }
 
     @Override
     public void accept(K8SClusterState k8SClusterState) {
         logger.debug("Will send the state cluster [{}]", k8SClusterState);
-        /*
-        Probably something like that?
-         */
-        //rabbitTemplate.convertAndSend(queueName, "Hello from RabbitMQ!");
-        throw new UnsupportedOperationException("Not implemented yet");
+
+        rabbitTemplate.convertAndSend(k8SClusterState);
     }
 }
