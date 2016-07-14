@@ -1,10 +1,14 @@
 package fr.xebia.xebicon.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class K8SApp {
 
     public String name;
 
-    public K8SApp(String name) {
+    @JsonCreator
+    public K8SApp(@JsonProperty("name") String name) {
         this.name = name;
     }
 

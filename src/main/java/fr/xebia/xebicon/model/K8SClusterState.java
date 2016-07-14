@@ -1,12 +1,16 @@
 package fr.xebia.xebicon.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 public class K8SClusterState {
 
     public List<K8SNode> nodes;
 
-    public K8SClusterState(List<K8SNode> nodes) {
+    @JsonCreator
+    public K8SClusterState(@JsonProperty("nodes") List<K8SNode> nodes) {
         this.nodes = nodes;
     }
 

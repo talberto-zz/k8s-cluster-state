@@ -1,5 +1,8 @@
 package fr.xebia.xebicon.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 public class K8SNode {
@@ -10,7 +13,8 @@ public class K8SNode {
 
     public List<K8SApp> apps;
 
-    public K8SNode(List<K8SApp> apps, String name, String state) {
+    @JsonCreator
+    public K8SNode(@JsonProperty("apps") List<K8SApp> apps, @JsonProperty("name") String name, @JsonProperty("state") String state) {
         this.apps = apps;
         this.name = name;
         this.state = state;

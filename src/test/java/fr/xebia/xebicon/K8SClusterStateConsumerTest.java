@@ -1,16 +1,17 @@
 package fr.xebia.xebicon;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.xebia.xebicon.model.K8SApp;
 import fr.xebia.xebicon.model.K8SClusterState;
 import fr.xebia.xebicon.model.K8SNode;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
-import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.IntegrationTest;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -36,24 +37,28 @@ public class K8SClusterStateConsumerTest {
     @Configuration
     public static class TestConfiguration {
         @Bean
-        SimpleMessageListenerContainer container(@Value("${rabbitMQ.queueName}") String queueName, ConnectionFactory connectionFactory, MessageListenerAdapter listenerAdapter) {
-            SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-            container.setConnectionFactory(connectionFactory);
-            container.setQueueNames(queueName);
-            container.setMessageListener(listenerAdapter);
-            return container;
-        }
+        SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory, MessageConverter messageConverter) {
+            SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
 
-        @Bean
-        MessageListenerAdapter listenerAdapter(Receiver receiver) {
-            return new MessageListenerAdapter(receiver, "receiveMessage");
+            factory.setConnectionFactory(connectionFactory);
+            factory.setMessageConverter(messageConverter);
+
+            return factory;
         }
     }
 
     @Component
     public static class Receiver {
 
-        public final ArrayList<String> receivedMessages = new ArrayList<>();
+        public final ArrayList<K8SClusterState> receivedMessages = new ArrayList<>();
+
+        private static Logger logger = LoggerFactory.getLogger(K8SCluterStateApp.class);
+
+        @RabbitListener(queues = {"${rabbitmq.routingKey}"})
+        public void handleClusterState(K8SClusterState state) {
+            logger.debug("Received message [{}]", state);
+            receivedMessages.add(state);
+        }
     }
 
     @Autowired
@@ -61,9 +66,6 @@ public class K8SClusterStateConsumerTest {
 
     @Autowired
     K8SClusterStateConsumer k8SClusterStateConsumer;
-
-    @Autowired
-    ObjectMapper objectMapper;
 
     @Test
     public void shouldSendToRabbitMQ() throws IOException {
@@ -74,14 +76,9 @@ public class K8SClusterStateConsumerTest {
         // Send the state and try to get it throw the listener
         k8SClusterStateConsumer.accept(clusterState);
 
-        await().atMost(30, SECONDS).until(() ->
-                assertThat(receiver.receivedMessages, hasSize(1))
-        );
+        await().atMost(10, SECONDS).until(() -> assertThat(receiver.receivedMessages, hasSize(1)));
 
-        // Extract the received message and parse it
-        K8SClusterState actualClusterState = objectMapper.readValue(receiver.receivedMessages.get(0), K8SClusterState.class);
-
-        assertThat(actualClusterState, is(equalTo(clusterState)));
+        assertThat(receiver.receivedMessages.get(0), is(equalTo(clusterState)));
     }
 
 }
