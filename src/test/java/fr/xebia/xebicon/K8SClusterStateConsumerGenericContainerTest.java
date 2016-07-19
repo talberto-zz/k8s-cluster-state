@@ -3,13 +3,17 @@ package fr.xebia.xebicon;
 import fr.xebia.xebicon.model.K8SApp;
 import fr.xebia.xebicon.model.K8SClusterState;
 import fr.xebia.xebicon.model.K8SNode;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.IntegrationTest;
@@ -18,6 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.testcontainers.containers.GenericContainer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,12 +35,26 @@ import static org.junit.Assert.assertThat;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringApplicationConfiguration(classes = {K8SCluterStateApp.class, K8SClusterStateConsumerTest.TestConfiguration.class})
+@SpringApplicationConfiguration(classes = {K8SCluterStateApp.class, K8SClusterStateConsumerGenericContainerTest.TestConfiguration.class})
 @IntegrationTest
-public class K8SClusterStateConsumerTest {
+public class K8SClusterStateConsumerGenericContainerTest {
+
+    @ClassRule
+    public static GenericContainer rabbitmq =
+            new GenericContainer("jbclaramonte/rabbitmq-testconfig:latest")
+                    .withExposedPorts(5672);
+
+    @BeforeClass
+    public static void beforeClass() {
+        // overrides rabbitmq property with the real data comming from the container
+        System.setProperty("spring.rabbitmq.port", "" + rabbitmq.getMappedPort(5672));
+        System.setProperty("spring.rabbitmq.host", "" + rabbitmq.getContainerIpAddress());
+    }
+
 
     @Configuration
     public static class TestConfiguration {
+
         @Bean
         SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory, MessageConverter messageConverter) {
             SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
@@ -44,6 +63,30 @@ public class K8SClusterStateConsumerTest {
             factory.setMessageConverter(messageConverter);
 
             return factory;
+        }
+
+        @Bean
+        public AmqpAdmin amqpAdmin(ConnectionFactory connectionFactory) {
+            System.out.println("-2-host:" + connectionFactory.getHost());
+            System.out.println("-2-port:" + connectionFactory.getPort());
+
+            return new RabbitAdmin(connectionFactory);
+        }
+
+
+        @Bean
+        public FanoutExchange xebiconExchangeExchange() {
+            return new FanoutExchange("xebiconExchange");
+        }
+
+        @Bean
+        public Queue k8sStateObserverQueue() {
+            return new Queue("k8s-state-observer", true, false, true);
+        }
+
+        @Bean
+        public Binding inboundEmailExchangeBinding() {
+            return BindingBuilder.bind(k8sStateObserverQueue()).to(xebiconExchangeExchange());
         }
     }
 
@@ -54,7 +97,7 @@ public class K8SClusterStateConsumerTest {
 
         private static Logger logger = LoggerFactory.getLogger(K8SCluterStateApp.class);
 
-        @RabbitListener(queues = {"${rabbitmq.routingKey}"})
+        @RabbitListener(queues = {"k8s-state-observer"})
         public void handleClusterState(K8SClusterState state) {
             logger.debug("Received message [{}]", state);
             receivedMessages.add(state);

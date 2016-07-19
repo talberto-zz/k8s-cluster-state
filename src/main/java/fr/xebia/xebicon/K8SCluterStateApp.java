@@ -24,10 +24,9 @@ public class K8SCluterStateApp {
     }
 
     @Bean
-    public RabbitTemplate rabbitTemplate(@Value("${rabbitmq.exchange}") String exchange, @Value("${rabbitmq.routingKey}") String routingKey, ConnectionFactory connectionFactory, MessageConverter messageConverter) {
+    public RabbitTemplate rabbitTemplate(@Value("${rabbitmq.exchange}") String exchange, ConnectionFactory connectionFactory, MessageConverter messageConverter) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setExchange(exchange);
-        rabbitTemplate.setRoutingKey(routingKey);
         rabbitTemplate.setMessageConverter(messageConverter);
         return rabbitTemplate;
     }
