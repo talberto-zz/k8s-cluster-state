@@ -1,5 +1,7 @@
 package fr.xebia.xebicon;
 
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -28,6 +30,11 @@ public class K8SCluterStateApp {
         rabbitTemplate.setRoutingKey(routingKey);
         rabbitTemplate.setMessageConverter(messageConverter);
         return rabbitTemplate;
+    }
+
+    @Bean
+    public KubernetesClient k8sClient() {
+        return new DefaultKubernetesClient();
     }
 
     public static void main(String[] args) {
