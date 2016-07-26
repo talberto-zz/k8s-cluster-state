@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-@ConditionalOnProperty(name = "enable.scheduler", matchIfMissing = true)
+@ConditionalOnProperty(name = "k8s.clientType", havingValue = "poll")
 @Component
 public class K8SClusterStatePollingBridge {
 

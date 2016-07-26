@@ -49,7 +49,7 @@ public class K8SClusterStateSupplier implements Supplier<K8SClusterState> {
         Map<Node, List<Pod>> podsByNode = new HashMap<>();
 
         pods.stream().forEach(pod -> {
-            Node node = findPodForNode(pod, nodes);
+            Node node = findNodeForPod(pod, nodes);
 
             List<Pod> oldPods = podsByNode.get(node);
             if (oldPods == null) {
@@ -77,7 +77,7 @@ public class K8SClusterStateSupplier implements Supplier<K8SClusterState> {
         return new K8SApp(pod.getMetadata().getName());
     }
 
-    private Node findPodForNode(Pod pod, List<Node> nodes) {
+    private Node findNodeForPod(Pod pod, List<Node> nodes) {
         List<Node> filteredNodes = nodes.stream().filter(node -> node.getMetadata().getName().equals(pod.getSpec().getNodeName())).collect(Collectors.toList());
 
         logger.debug("Found node [{}] for pod [{}]", filteredNodes, pod);
