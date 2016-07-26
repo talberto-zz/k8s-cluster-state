@@ -1,9 +1,6 @@
 package fr.xebia.xebicon;
 
-import io.fabric8.kubernetes.api.model.ReplicationController;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.KubernetesClientException;
-import io.fabric8.kubernetes.client.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -25,19 +22,20 @@ public class K8SClusterStateWatcher {
 
     @PostConstruct
     public void watch() {
-        kubernetesClient.replicationControllers().inNamespace("default").watch(new Watcher<ReplicationController>() {
-            @Override
-            public void eventReceived(Action action, ReplicationController resource) {
-                logger.info("{}: {}", action, resource.getMetadata().getResourceVersion());
-            }
-
-            @Override
-            public void onClose(KubernetesClientException e) {
-                if (e != null) {
-                    logger.error(e.getMessage(), e);
-                }
-            }
-        });
+        kubernetesClient.pods().inNamespace("default").watch(new PodWatcher());
+//        kubernetesClient.replicationControllers().inNamespace("default").watch(new Watcher<ReplicationController>() {
+//            @Override
+//            public void eventReceived(Action action, ReplicationController resource) {
+//                logger.info("{}: {}", action, resource.getMetadata().getResourceVersion());
+//            }
+//
+//            @Override
+//            public void onClose(KubernetesClientException e) {
+//                if (e != null) {
+//                    logger.error(e.getMessage(), e);
+//                }
+//            }
+//        });
     }
 
 }

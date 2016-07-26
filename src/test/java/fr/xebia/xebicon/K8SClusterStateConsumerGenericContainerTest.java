@@ -2,6 +2,7 @@ package fr.xebia.xebicon;
 
 import fr.xebia.xebicon.model.K8SApp;
 import fr.xebia.xebicon.model.K8SClusterState;
+import fr.xebia.xebicon.model.K8SMsg;
 import fr.xebia.xebicon.model.K8SNode;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -93,14 +94,14 @@ public class K8SClusterStateConsumerGenericContainerTest {
     @Component
     public static class Receiver {
 
-        public final ArrayList<K8SClusterState> receivedMessages = new ArrayList<>();
+        public final ArrayList<K8SMsg> receivedMessages = new ArrayList<>();
 
         private static Logger logger = LoggerFactory.getLogger(K8SCluterStateApp.class);
 
         @RabbitListener(queues = {"k8s-state-observer"})
-        public void handleClusterState(K8SClusterState state) {
-            logger.debug("Received message [{}]", state);
-            receivedMessages.add(state);
+        public void handleClusterState(K8SMsg k8SMsg) {
+            logger.debug("Received message [{}]", k8SMsg);
+            receivedMessages.add(k8SMsg);
         }
     }
 
@@ -115,13 +116,14 @@ public class K8SClusterStateConsumerGenericContainerTest {
         K8SApp app = new K8SApp("dummy-application");
         K8SNode node = new K8SNode(Collections.singletonList(app), "test-node", "ON");
         K8SClusterState clusterState = new K8SClusterState(Collections.singletonList(node));
+        K8SMsg k8SMsg = new K8SMsg(clusterState);
 
         // Send the state and try to get it throw the listener
         k8SClusterStateConsumer.accept(clusterState);
 
         await().atMost(10, SECONDS).until(() -> assertThat(receiver.receivedMessages, hasSize(1)));
 
-        assertThat(receiver.receivedMessages.get(0), is(equalTo(clusterState)));
+        assertThat(receiver.receivedMessages.get(0), is(equalTo(k8SMsg)));
     }
 
 }
