@@ -26,6 +26,7 @@
         <hibernate-validator.version>5.2.4.Final</hibernate-validator.version>
         <testcontainers.version>1.1.0</testcontainers.version>
         <docker-maven-plugin.version>0.4.11</docker-maven-plugin.version>
+        <docker.image>${docker.hub.username}/${project.artifactId}</docker.image>
     </properties>
 
     <dependencies>
@@ -96,7 +97,7 @@
                 <version>${docker-maven-plugin.version}</version>
                 <executions>
                     <execution>
-                        <phase>install</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>build</goal>
                         </goals>
@@ -105,7 +106,7 @@
                 <!-- To push the image you just built to the registry, specify the pushImage flag. -->
                 <!-- mvn clean package docker:build -DpushImage -->
                 <configuration>
-                    <imageName>jbclaramonte/${project.artifactId}</imageName>
+                    <imageName>${docker.image}</imageName>
                     <dockerDirectory>docker</dockerDirectory>
                     <serverId>docker-hub</serverId>
                     <!-- add a server entry in settings.xml :-->
@@ -132,9 +133,6 @@
                     </resources>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
-
-
 </project>

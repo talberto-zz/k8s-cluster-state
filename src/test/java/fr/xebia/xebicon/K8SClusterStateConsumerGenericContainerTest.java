@@ -44,6 +44,10 @@ public class K8SClusterStateConsumerGenericContainerTest {
     public static GenericContainer rabbitmq =
             new GenericContainer("jbclaramonte/rabbitmq-testconfig:latest")
                     .withExposedPorts(5672);
+    @Autowired
+    Receiver receiver;
+    @Autowired
+    K8SClusterStateConsumer k8SClusterStateConsumer;
 
     @BeforeClass
     public static void beforeClass() {
@@ -52,6 +56,20 @@ public class K8SClusterStateConsumerGenericContainerTest {
         System.setProperty("spring.rabbitmq.host", "" + rabbitmq.getContainerIpAddress());
     }
 
+    @Test
+    public void shouldSendToRabbitMQ() throws IOException {
+        K8SApp app = new K8SApp("dummy-application");
+        K8SNode node = new K8SNode(Collections.singletonList(app), "test-node", "ON");
+        K8SClusterState clusterState = new K8SClusterState(Collections.singletonList(node));
+        K8SMsg k8SMsg = new K8SMsg(clusterState);
+
+        // Send the state and try to get it throw the listener
+        k8SClusterStateConsumer.accept(clusterState);
+
+        await().atMost(10, SECONDS).until(() -> assertThat(receiver.receivedMessages, hasSize(1)));
+
+        assertThat(receiver.receivedMessages.get(0), is(equalTo(k8SMsg)));
+    }
 
     @Configuration
     public static class TestConfiguration {
@@ -94,36 +112,14 @@ public class K8SClusterStateConsumerGenericContainerTest {
     @Component
     public static class Receiver {
 
-        public final ArrayList<K8SMsg> receivedMessages = new ArrayList<>();
-
         private static Logger logger = LoggerFactory.getLogger(K8SCluterStateApp.class);
+        public final ArrayList<K8SMsg> receivedMessages = new ArrayList<>();
 
         @RabbitListener(queues = {"k8s-state-observer"})
         public void handleClusterState(K8SMsg k8SMsg) {
             logger.debug("Received message [{}]", k8SMsg);
             receivedMessages.add(k8SMsg);
         }
-    }
-
-    @Autowired
-    Receiver receiver;
-
-    @Autowired
-    K8SClusterStateConsumer k8SClusterStateConsumer;
-
-    @Test
-    public void shouldSendToRabbitMQ() throws IOException {
-        K8SApp app = new K8SApp("dummy-application");
-        K8SNode node = new K8SNode(Collections.singletonList(app), "test-node", "ON");
-        K8SClusterState clusterState = new K8SClusterState(Collections.singletonList(node));
-        K8SMsg k8SMsg = new K8SMsg(clusterState);
-
-        // Send the state and try to get it throw the listener
-        k8SClusterStateConsumer.accept(clusterState);
-
-        await().atMost(10, SECONDS).until(() -> assertThat(receiver.receivedMessages, hasSize(1)));
-
-        assertThat(receiver.receivedMessages.get(0), is(equalTo(k8SMsg)));
     }
 
 }
