@@ -3,7 +3,6 @@ package fr.xebia.xebicon;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.xebia.xebicon.model.K8SClusterState;
-import fr.xebia.xebicon.model.K8SMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -33,8 +32,6 @@ public class K8SClusterStateConsumer implements Consumer<K8SClusterState> {
         }
 
 
-        K8SMsg k8SMsg = new K8SMsg(k8SClusterState);
-
-        rabbitTemplate.convertAndSend(k8SMsg);
+        rabbitTemplate.convertAndSend(k8SClusterState);
     }
 }
