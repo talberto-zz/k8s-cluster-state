@@ -70,7 +70,7 @@ public class K8SClusterStateSupplier implements Supplier<K8SClusterState> {
     }
 
     private K8SNode nodeToK8sNode(Node node, List<K8SApp> apps) {
-        return new K8SNode(apps, node.getMetadata().getName(), node.getStatus().getPhase());
+        return new K8SNode(apps, node.getMetadata().getName(), "ON");
     }
 
     private K8SApp podToK8sApp(Pod pod) {

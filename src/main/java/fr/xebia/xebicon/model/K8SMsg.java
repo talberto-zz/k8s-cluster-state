@@ -1,36 +1,26 @@
 package fr.xebia.xebicon.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
 public class K8SMsg {
 
-    private String type;
-    private K8SClusterState payload;
+    public final String type = "K8S_STATUS";
+    public final K8SClusterState payload;
 
-    public K8SMsg() {
-    }
-
+    @JsonCreator
     public K8SMsg(@JsonProperty("payload") K8SClusterState payload) {
-        type= "K8S_STATUS";
         this.payload = payload;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public K8SClusterState getPayload() {
-        return payload;
-    }
-
-    public void setPayload(K8SClusterState payload) {
-        this.payload = payload;
+    @Override
+    public String toString() {
+        return "K8SMsg{" +
+                "type='" + type + '\'' +
+                ", payload=" + payload +
+                '}';
     }
 
     @Override

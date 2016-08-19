@@ -7,11 +7,11 @@ import java.util.List;
 
 public class K8SNode {
 
-    public String name;
+    public final String name;
 
-    public String state;
+    public final String state;
 
-    public List<K8SApp> apps;
+    public final List<K8SApp> apps;
 
     @JsonCreator
     public K8SNode(@JsonProperty("apps") List<K8SApp> apps, @JsonProperty("name") String name, @JsonProperty("state") String state) {

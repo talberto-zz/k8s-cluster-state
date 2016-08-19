@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class K8SApp {
 
-    public String name;
+    public final String name;
 
     @JsonCreator
     public K8SApp(@JsonProperty("name") String name) {

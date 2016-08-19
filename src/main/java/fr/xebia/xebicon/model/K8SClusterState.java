@@ -7,7 +7,7 @@ import java.util.List;
 
 public class K8SClusterState {
 
-    public List<K8SNode> nodes;
+    public final List<K8SNode> nodes;
 
     @JsonCreator
     public K8SClusterState(@JsonProperty("nodes") List<K8SNode> nodes) {
