@@ -14,7 +14,7 @@ spec:
         image: talberto/k8s-cluster-state
         env:
         - name: K8S_POLLING_INTERVAL
-          value: "1000"
+          value: "10000"
         - name: K8S_CLIENT_TYPE
           value: "poll"
         - name: RABBITMQ_EXCHANGE
