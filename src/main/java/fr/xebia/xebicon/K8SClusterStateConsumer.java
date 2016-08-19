@@ -1,7 +1,6 @@
 package fr.xebia.xebicon;
 
 import fr.xebia.xebicon.model.K8SClusterState;
-import fr.xebia.xebicon.model.K8SMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -26,8 +25,6 @@ public class K8SClusterStateConsumer implements Consumer<K8SClusterState> {
     public void accept(K8SClusterState k8SClusterState) {
         logger.debug("Will send the state cluster [{}]", k8SClusterState);
 
-        K8SMsg k8SMsg = new K8SMsg(k8SClusterState);
-
-        rabbitTemplate.convertAndSend(k8SMsg);
+        rabbitTemplate.convertAndSend(k8SClusterState);
     }
 }
