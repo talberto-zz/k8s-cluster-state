@@ -13,7 +13,7 @@ public class K8SMsg {
     }
 
     public K8SMsg(@JsonProperty("payload") K8SClusterState payload) {
-        type= "K8SClusterState";
+        type= "K8S_STATUS";
         this.payload = payload;
     }
 

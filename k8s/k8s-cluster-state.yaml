@@ -18,17 +18,17 @@ spec:
         - name: K8S_CLIENT_TYPE
           value: "poll"
         - name: RABBITMQ_EXCHANGE
-          value: "k8s-cluster-queue"
+          value: "xebiconExchange"
         - name: RABBITMQ_HOST
-          value: "rabbitmq"
+          value: "52.28.106.238"
         - name: RABBITMQ_USERNAME
-          value: "guest"
+          value: "xebia"
         - name: RABBITMQ_PASSWORD
-          value: "guest"
+          value: "xebia2015"
         resources:
           requests:
             memory: "128Mi"
             cpu: "250m"
           limits:
-            memory: "128Mi"
-            cpu: "500m"
+            memory: "512Mi"
+            cpu: "1G"
