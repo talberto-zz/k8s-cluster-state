@@ -12,13 +12,14 @@ spec:
       containers:
       - name: k8s-cluster-state
         image: talberto/k8s-cluster-state
+        imagePullPolicy: Always
         env:
         - name: K8S_POLLING_INTERVAL
           value: "10000"
         - name: K8S_CLIENT_TYPE
           value: "poll"
         - name: RABBITMQ_EXCHANGE
-          value: "xebiconExchange"
+          value: "xebiconTomasRodriguez"
         - name: RABBITMQ_HOST
           value: "52.28.106.238"
         - name: RABBITMQ_USERNAME
@@ -31,4 +32,4 @@ spec:
             cpu: "250m"
           limits:
             memory: "512Mi"
-            cpu: "1G"
+            cpu: "800m"
