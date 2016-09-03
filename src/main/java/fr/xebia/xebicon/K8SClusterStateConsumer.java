@@ -1,5 +1,7 @@
 package fr.xebia.xebicon;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.xebia.xebicon.model.K8SClusterState;
 import fr.xebia.xebicon.model.K8SMsg;
 import org.slf4j.Logger;
@@ -24,7 +26,12 @@ public class K8SClusterStateConsumer implements Consumer<K8SClusterState> {
 
     @Override
     public void accept(K8SClusterState k8SClusterState) {
-        logger.debug("Will send the state cluster [{}]", k8SClusterState);
+        try {
+            logger.debug("Will send the state cluster [{}]", (new ObjectMapper()).writeValueAsString(k8SClusterState));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
 
         K8SMsg k8SMsg = new K8SMsg(k8SClusterState);
 

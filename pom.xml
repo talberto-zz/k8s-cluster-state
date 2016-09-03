@@ -113,10 +113,10 @@
                     <!--
                         <server>
                             <id>docker-hub</id>
-                            <username>jbclaramonte</username>
-                            <password>dockerhub9!</password>
+                            <username>dockerhub-username</username>
+                            <password>dockerhub-password</password>
                             <configuration>
-                              <email>jeanbaptiste.claramonte@gmail.com</email>
+                              <email>email</email>
                             </configuration>
                         </server>
                     -->

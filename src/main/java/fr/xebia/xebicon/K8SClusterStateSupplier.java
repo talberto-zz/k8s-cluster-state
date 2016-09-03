@@ -11,12 +11,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @Component
 public class K8SClusterStateSupplier implements Supplier<K8SClusterState> {
@@ -40,32 +40,30 @@ public class K8SClusterStateSupplier implements Supplier<K8SClusterState> {
 
         List<NodeAndPods> nodesAndPods = groupPodsByNode(nodes, pods);
 
-        List<K8SNode> k8sNodes = nodesAndPods.stream().map(this::buildK8sNode).collect(Collectors.toList());
+        List<K8SNode> k8sNodes = nodesAndPods.stream().map(this::buildK8sNode).collect(toList());
 
         return new K8SClusterState(k8sNodes);
     }
 
+    public static <T, U, R> Function<U, R> partial(BiFunction<T, U, R> biFunction, T t) {
+        return u -> biFunction.apply(t, u);
+    }
+
     private List<NodeAndPods> groupPodsByNode(List<Node> nodes, List<Pod> pods) {
-        Map<Node, List<Pod>> podsByNode = new HashMap<>();
 
-        pods.stream().forEach(pod -> {
-            Node node = findNodeForPod(pod, nodes);
+        return nodes.stream()
+                .map(partial(this::findPodsForNode, pods))
+                .collect(toList());
 
-            List<Pod> oldPods = podsByNode.get(node);
-            if (oldPods == null) {
-                oldPods = new ArrayList<>();
-                oldPods.add(pod);
-            } else {
-                oldPods.add(pod);
-            }
-            podsByNode.put(node, oldPods);
-        });
-
-        return podsByNode.entrySet().stream().map(entry -> new NodeAndPods(entry.getKey(), entry.getValue())).collect(Collectors.toList());
+//        nodes.stream().forEach(node -> {
+//            findPodsForNode(pods, node);
+//            nodeAndPods.add(new NodeAndPods(node, pods));
+//        });
+//        return nodeAndPods;
     }
 
     private K8SNode buildK8sNode(NodeAndPods nodeAndPods) {
-        List<K8SApp> apps = nodeAndPods.pods.stream().map(this::podToK8sApp).collect(Collectors.toList());
+        List<K8SApp> apps = nodeAndPods.pods.stream().map(this::podToK8sApp).collect(toList());
         return nodeToK8sNode(nodeAndPods.node, apps);
     }
 
@@ -77,11 +75,11 @@ public class K8SClusterStateSupplier implements Supplier<K8SClusterState> {
         return new K8SApp(pod.getMetadata().getName());
     }
 
-    private Node findNodeForPod(Pod pod, List<Node> nodes) {
-        List<Node> filteredNodes = nodes.stream().filter(node -> node.getMetadata().getName().equals(pod.getSpec().getNodeName())).collect(Collectors.toList());
-
-        logger.debug("Found node [{}] for pod [{}]", filteredNodes, pod);
-        return filteredNodes.get(0);
+    private NodeAndPods findPodsForNode(List<Pod> pods, Node node) {
+        List<Pod> podsForNode = pods.stream()
+                .filter(pod -> pod.getSpec().getNodeName().equals(node.getMetadata().getName()))
+                .collect(toList());
+        return new NodeAndPods(node, podsForNode);
     }
 
     private static class NodeAndPods {
