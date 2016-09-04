@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 
 public class K8SNode {
 
@@ -24,21 +25,13 @@ public class K8SNode {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         K8SNode k8SNode = (K8SNode) o;
-
-        if (!name.equals(k8SNode.name)) return false;
-        if (!state.equals(k8SNode.state)) return false;
-        return apps.equals(k8SNode.apps);
-
+        return Objects.equals(name, k8SNode.name);
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + state.hashCode();
-        result = 31 * result + apps.hashCode();
-        return result;
+        return Objects.hash(name);
     }
 
     @Override

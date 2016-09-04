@@ -1,5 +1,7 @@
 package fr.xebia.xebicon;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.xebia.xebicon.model.K8SApp;
 import fr.xebia.xebicon.model.K8SClusterState;
 import fr.xebia.xebicon.model.K8SNode;
@@ -11,7 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -25,9 +29,13 @@ public class K8SClusterStateSupplier implements Supplier<K8SClusterState> {
 
     private final KubernetesClient k8sClient;
 
+    private final K8sNodesBackupRepository k8sNodesBackupRepository;
+
     @Autowired
-    public K8SClusterStateSupplier(KubernetesClient k8sClient) {
+    public K8SClusterStateSupplier(KubernetesClient k8sClient,
+                                   K8sNodesBackupRepository k8sNodesBackupRepository) {
         this.k8sClient = k8sClient;
+        this.k8sNodesBackupRepository = k8sNodesBackupRepository;
     }
 
     @Override
@@ -36,13 +44,41 @@ public class K8SClusterStateSupplier implements Supplier<K8SClusterState> {
 
         List<Node> nodes = k8sClient.nodes().list().getItems();
 
+        try {
+            logger.debug("raw data for nodes: {}", (new ObjectMapper()).writeValueAsString(nodes));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
         List<Pod> pods = k8sClient.pods().list().getItems();
 
         List<NodeAndPods> nodesAndPods = groupPodsByNode(nodes, pods);
 
-        List<K8SNode> k8sNodes = nodesAndPods.stream().map(this::buildK8sNode).collect(toList());
+        List<K8SNode> k8sNodes = nodesAndPods.stream()
+                .map(this::buildK8sNode)
+                .collect(toList());
+
+        Optional<List<K8SNode>> previousK8sNodes = k8sNodesBackupRepository.findPreviousK8sNodes();
+        if (previousK8sNodes.isPresent()) {
+            updateNodesState(previousK8sNodes.get(), k8sNodes);
+        }
+
+        k8sNodes = k8sNodes.stream()
+                .sorted((o1, o2) -> o1.name.compareTo(o2.name))
+                .collect(toList());
+
+        k8sNodesBackupRepository.save(k8sNodes);
 
         return new K8SClusterState(k8sNodes);
+    }
+
+    public void updateNodesState(List<K8SNode> previousK8sNodes, List<K8SNode> justFetchedK8sNodes) {
+        previousK8sNodes.forEach(previousK8sNode -> {
+            if (!justFetchedK8sNodes.contains(previousK8sNode)) {
+                logger.debug("node {} is OFF", previousK8sNode.name);
+                justFetchedK8sNodes.add(new K8SNode(new ArrayList<K8SApp>(), previousK8sNode.name, "OFF"));
+            }
+        });
     }
 
     public static <T, U, R> Function<U, R> partial(BiFunction<T, U, R> biFunction, T t) {
@@ -50,16 +86,9 @@ public class K8SClusterStateSupplier implements Supplier<K8SClusterState> {
     }
 
     private List<NodeAndPods> groupPodsByNode(List<Node> nodes, List<Pod> pods) {
-
         return nodes.stream()
                 .map(partial(this::findPodsForNode, pods))
                 .collect(toList());
-
-//        nodes.stream().forEach(node -> {
-//            findPodsForNode(pods, node);
-//            nodeAndPods.add(new NodeAndPods(node, pods));
-//        });
-//        return nodeAndPods;
     }
 
     private K8SNode buildK8sNode(NodeAndPods nodeAndPods) {

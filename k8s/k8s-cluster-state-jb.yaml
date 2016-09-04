@@ -32,3 +32,5 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "1G"
+      nodeSelector:
+        node: cluster-state
