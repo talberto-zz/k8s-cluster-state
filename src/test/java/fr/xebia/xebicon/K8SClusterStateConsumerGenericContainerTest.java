@@ -58,8 +58,9 @@ public class K8SClusterStateConsumerGenericContainerTest {
     @Test
     public void shouldSendToRabbitMQ() throws IOException {
         K8SApp app = new K8SApp("dummy-application");
-        K8SNode node = new K8SNode(Collections.singletonList(app), "test-node", "ON");
-        K8SClusterState k8SClusterState = new K8SClusterState(Collections.singletonList(node));
+        K8SNode cloudNode = new K8SNode(Collections.singletonList(app), true);
+        K8SNode localNode = new K8SNode(Collections.emptyList(), false);
+        K8SClusterState k8SClusterState = new K8SClusterState(cloudNode, localNode);
 
         // Send the state and try to get it throw the listener
         clusterStateConsumer.accept(k8SClusterState);

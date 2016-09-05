@@ -8,17 +8,21 @@ import java.util.Objects;
 
 public class K8SNode {
 
-    public final String name;
-
-    public final String state;
-
+    public final boolean active;
     public final List<K8SApp> apps;
 
     @JsonCreator
-    public K8SNode(@JsonProperty("apps") List<K8SApp> apps, @JsonProperty("name") String name, @JsonProperty("state") String state) {
+    public K8SNode(@JsonProperty("apps") List<K8SApp> apps, @JsonProperty("active") boolean active) {
         this.apps = apps;
-        this.name = name;
-        this.state = state;
+        this.active = active;
+    }
+
+    @Override
+    public String toString() {
+        return "K8SNode{" +
+                "active=" + active +
+                ", apps=" + apps +
+                '}';
     }
 
     @Override
@@ -26,20 +30,12 @@ public class K8SNode {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         K8SNode k8SNode = (K8SNode) o;
-        return Objects.equals(name, k8SNode.name);
+        return active == k8SNode.active &&
+                Objects.equals(apps, k8SNode.apps);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name);
-    }
-
-    @Override
-    public String toString() {
-        return "K8SNode{" +
-                "name='" + name + '\'' +
-                ", state='" + state + '\'' +
-                ", apps=" + apps +
-                '}';
+        return Objects.hash(active, apps);
     }
 }
